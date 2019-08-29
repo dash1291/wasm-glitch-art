@@ -16,22 +16,10 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 use web_sys::{CanvasRenderingContext2d, ImageData, HtmlCanvasElement};
 
 #[wasm_bindgen]
-pub struct Pixel {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8
-}
-
-#[wasm_bindgen]
 pub struct GlitchImage {
     raw_pixels: Vec<u8>,
     width: u32,
     height: u32
-}
-
-#[wasm_bindgen]
-extern {
-    fn alert(s: &str);
 }
 
 #[wasm_bindgen]
@@ -99,7 +87,7 @@ impl GlitchImage {
 
     pub fn glitch_image(&mut self) {
         // iterate through pixel array
-        let segments = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
+        let segments = [0.1, 0.05, 0.12, 0.08, 0.15, 0.1, 0.1, 0.1, 0.1, 0.1];
         let max_shift = 0.015 * self.width as f32;
         let base_x = 0.05 * self.width as f32;
         let mut shift_phase = 1.0;
