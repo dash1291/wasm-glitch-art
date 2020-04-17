@@ -29,9 +29,13 @@ impl GlitchImage {
         let width = canvas.width();
         let height = canvas.height();
 
-        let data = ctx.get_image_data(0.0, 0.0, width as f64, height as f64).unwrap();
+        //let data = ctx.get_image_data(0.0, 0.0, width as f64, height as f64).unwrap();
 
-        return GlitchImage {raw_pixels: data.data().to_vec(), width: width as u32, height: height as u32}
+        return GlitchImage {raw_pixels: vec![0; (width*height*4) as usize], width: width as u32, height: height as u32}
+    }
+
+    pub fn raw_pixels(&self) -> *const u8 {
+        self.raw_pixels.as_ptr()
     }
 
     fn shift_x(&mut self, clip_x: u32, clip_y: u32, clip_h: u32, shift_w: u32) {
@@ -40,7 +44,7 @@ impl GlitchImage {
             40.0 * js_sys::Math::random(),
             40.0 * js_sys::Math::random()
         ];
-        let mut buf8 = self.raw_pixels.to_vec();
+        //let mut buf8 = self.raw_pixels[(clip_y * self.width)*4..((clip_y + clip_h)*self.width + shift_w)*4].to_vec();
 
         let mut y = clip_y;
         let mut x = 0;
@@ -51,13 +55,16 @@ impl GlitchImage {
 
         while y < clip_y + clip_h {
             x = 0;
-            
+
             while x < clip_x + shift_w {
                 idx = ((y * self.width) + x) * 4;
-                buf8[idx as usize] = 255 - (decrements[0] as u8);
-                buf8[(idx + 1) as usize] = 255 - (decrements[1] as u8);
-                buf8[(idx + 2) as usize] = 255 - (decrements[2] as u8);
-                buf8[(idx + 3) as usize] = 255;
+                
+
+                self.raw_pixels[idx as usize] = 255 - (decrements[0] as u8);
+                self.raw_pixels[(idx + 1) as usize] = 255 - (decrements[1] as u8);
+                self.raw_pixels[(idx + 2) as usize] = 255 - (decrements[2] as u8);
+                self.raw_pixels[(idx + 3) as usize] = 255;
+
                 x += 1;
             }
             y += 1;
@@ -66,18 +73,18 @@ impl GlitchImage {
         y = clip_y;
 
         while y < clip_y + clip_h {
-            x = 0;
+            x = self.width - (clip_x + shift_w) - 1;
             
-            while x < self.width - (clip_x + shift_w) {
+            while x > 0 {
                 idx_orig = ((y * self.width) + x) * 4;
                 idx2 =  ((y * self.width) + (x + clip_x + shift_w)) * 4;
-                buf8[(idx2) as usize] = self.raw_pixels[idx_orig as usize] - (decrements[0] as u8);
-                x += 1;
+                self.raw_pixels[(idx2) as usize] = self.raw_pixels[idx_orig as usize] - (decrements[0] as u8);
+                x -= 1;
             }
             y += 1;
         }
 
-        self.raw_pixels = buf8.to_vec();
+        //self.raw_pixels = self.raw_pixel[]sbuf8.to_vec();
     }
 
     pub fn paint_image(&mut self, canvas: &HtmlCanvasElement, ctx: &CanvasRenderingContext2d) {

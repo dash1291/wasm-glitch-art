@@ -1,5 +1,5 @@
 import { GlitchImage, init_panic_hook } from "wasm-glitch-art";
-
+import { memory } from "wasm-glitch-art/wasm_glitch_art_bg";
 
 let c = document.getElementById('canvas');
 let ctx = c.getContext('2d');
@@ -10,12 +10,16 @@ let img;
 
 var onImageReady = function() {
     let Filters = {};
+  var glitchImage;
     Filters.getPixels = function(img) {
       var c = this.getCanvas(img.width, img.height)
+      
       var ctx = c.getContext('2d');
-      console.log(img)
       ctx.drawImage(img, 0, 0);
-      return ctx.getImageData(0,0,c.width,c.height);
+      glitchImage = GlitchImage.new(c, ctx);
+      const pixelData = new Uint8Array(memory.buffer, glitchImage.raw_pixels(), img.width * img.height * 4);
+      pixelData.set(ctx.getImageData(0, 0, c.width,c.height).data, 0)
+      return pixelData
     };
   
     Filters.getCanvas = function(w,h) {
@@ -28,23 +32,24 @@ var onImageReady = function() {
   
     Filters.filterImage = function(filter, image) {
       var args = [this.getPixels(image)]
-
-      //ctx.putImageData(this.getPixels[image], 0, 0)
-
       var filtered = filter.apply(null, img);
-      //var c = this.getCanvas(img.width, img.height)
-      //var ctx = c.getContext('2d');
     };
   
     Filters.grayscale = function(pixels, args) {
         let c = document.getElementById('canvas');
         let ctx = c.getContext('2d');
-        const a = GlitchImage.new(c, ctx);
-        a.glitch_image();
-        a.paint_image(c, ctx);
+        ctx.getImageData(0,0,c.width,c.height);
+        glitchImage.glitch_image();
+        const canvasData = new Uint8Array(memory.buffer, glitchImage.raw_pixels(), img.width * img.height * 4);
+        const imageData = ctx.createImageData(img.width, img.height);
+        imageData.data.set(canvasData);
+        ctx.putImageData(imageData, 0, 0)
     };
-  
+    console.time('glitching')
+
     Filters.filterImage(Filters.grayscale, img)
+    console.timeEnd('glitching')
+
   }
   
   function handleImage(e){
